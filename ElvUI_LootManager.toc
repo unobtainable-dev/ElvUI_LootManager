@@ -1,0 +1,9 @@
+## Interface: 30300
+## Title: |cff1784d1E|cff3399d1l|cff4daed1v|cff66c3d1U|cff80d8d1I|r |cff00CCFFLoo|cff5A8CEET|cffA335EEMana|cffD858C7ge|cffF06F85r|r
+## Author: |cfff58cbaUn|cffff9566ob|cffff9f4dta|cffffa933in|cffffb31aab|cffffd700le|r
+## Version: 1.0
+## Notes: Automated Group Loot and Master Looter Solution, with simple and intuitive interface.  Author: |cfff58cbaUn|cffff9566ob|cffff9f4dta|cffffa933in|cffffb31aab|cffffd700le|r
+## SavedVariables: ElvUI_LootManagerGlobal
+
+ElvUI_LootManager.lua
+Config\Load_Config.xml
