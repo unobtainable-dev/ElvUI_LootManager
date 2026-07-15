@@ -48,9 +48,6 @@ function ELM:Gradient(text, hexArray)
     return result
 end
 
--- Update your BrandingPrefix to use the new internal function
-local BrandingPrefix = ELM:Gradient("ElvUI Loot Manager", {"1784d1", "00CCFF", "A335EE", "F06F85"})
-
 -- 2. BRANDING PREFIX (Static Hex Gradient)
 local BrandingPrefix = "|cff1784d1E|cff3399d1l|cff4daed1v|cff66c3d1U|cff80d8d1I|r |cff00CCFFLoo|cff5A8CEET|cffA335EEMana|cffD858C7ge|cffF06F85r|r"
 
