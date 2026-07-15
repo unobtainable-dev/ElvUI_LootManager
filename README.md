@@ -48,3 +48,4 @@ Access the configuration panel directly in the **ElvUI settings menu** or use th
 * [ ] **Easy Item Linking**: Add the ability to paste or shift-click item links directly into configuration boxes for quicker Need List setup.
 * [ ] **Performance & Speed Optimization**: Further refactor execution paths to ensure maximum speed and efficiency.
 * [ ] **Combat Safeguard**: Optimize handling to ensure loot processing never interferes with or clutters the UI while the player is in combat.
+* [ ] **Compatibility**: Ensure that plugin-in can be used on previous version of ElvUI as well.
