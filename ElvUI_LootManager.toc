@@ -3,6 +3,7 @@
 ## Author: |cfff58cbaUn|cffff9566ob|cffff9f4dta|cffffa933in|cffffb31aab|cffffd700le|r
 ## Version: 1.0
 ## Notes: Automated Group Loot and Master Looter Solution, with simple and intuitive interface.
+## SavedVariables: ElvUI_LootManagerGlobal
 
 ElvUI_LootManager.lua
 Config\Load_Config.xml

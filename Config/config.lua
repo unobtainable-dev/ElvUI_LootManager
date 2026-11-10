@@ -143,11 +143,8 @@ local function Options(ELM)
 						width = 2.2, 
 values = function()
     local t = {} 
-    -- Change 'needList' to 'boeList' for the other dropdown
     for id, storedName in pairs(E.LootManager.Global.needList) do 
         local currentName = GetItemName(id)
-        
-        -- If the name is now in cache and isn't just the ID placeholder
         if currentName and not currentName:find("^ID: ") then
             -- Update the database permanently
             E.LootManager.Global.needList[id] = currentName
@@ -297,13 +294,9 @@ end,
 						width = 2.2, 
 values = function()
     local t = {} 
-    -- Change 'needList' to 'boeList' for the other dropdown
     for id, storedName in pairs(E.LootManager.Global.boeList) do 
         local currentName = GetItemName(id)
-        
-        -- If the name is now in cache and isn't just the ID placeholder
         if currentName and not currentName:find("^ID: ") then
-            -- Update the database permanently
             E.LootManager.Global.boeList[id] = currentName
             t[id] = currentName
         else
@@ -354,7 +347,7 @@ end,
                     header = { order = 1, type = 'header', name = GetDiscordHeader() },
                     discordLink = {
                         order = 3, type = 'input', name = 'Discord Link (Copy)', width = 'full',
-                        get = function() return "https://discord.gg/a9BCdEjhS" end,
+                        get = function() return "" end,
                         set = function() end, 
                     },
                 }

@@ -50,13 +50,17 @@ end
 
 -- 2. BRANDING PREFIX (Static Hex Gradient)
 local BrandingPrefix = "|cff1784d1E|cff3399d1l|cff4daed1v|cff66c3d1U|cff80d8d1I|r |cff00CCFFLoo|cff5A8CEET|cffA335EEMana|cffD858C7ge|cffF06F85r|r"
+local AddonColors = {"1784d1", "00CCFF", "A335EE", "F06F85"}
+local BoEColors = {"FFD700", "FFFFFF", "FFD700"}
+local HeaderGradientText = "|cffffffff[|r" .. ELM:Gradient("ElvUI Loot Manager Assignments", AddonColors) .. "|cffffffff]|r"
+local BoEGradientPrefix = "• " .. ELM:Gradient("Raid BoE", BoEColors)
 
 -- 3. CONFIG TABLE CONTAINER
 ELM.Config = {}
 
--- -------------------------------------------------------------------------
+-- ============================================================================
 -- ROSTER CACHE
--- -------------------------------------------------------------------------
+-- ============================================================================
 local RosterCache = {}
 function ELM:UpdateRosterCache()
     wipe(RosterCache)
@@ -67,17 +71,23 @@ function ELM:UpdateRosterCache()
             if class then RosterCache[name] = class end
         end
     end
-    if UnitInRaid("player") then
-        for i = 1, 40 do CacheUnit("raid"..i) end
+    local numRaid = GetNumRaidMembers()
+    if numRaid > 0 then
+        for i = 1, numRaid do CacheUnit("raid"..i) end
     else
-        for i = 1, 4 do CacheUnit("party"..i) end
-        CacheUnit("player")
+        local numParty = GetNumPartyMembers()
+        for i = 1, numParty do CacheUnit("party"..i) end
+        if E.myname and E.myclass then
+            RosterCache[E.myname] = E.myclass
+        else
+            CacheUnit("player")
+        end
     end
 end
 
--- -------------------------------------------------------------------------
+-- ============================================================================
 -- TOOLTIP SCANNER
--- -------------------------------------------------------------------------
+-- ============================================================================
 local ScanTooltip = CreateFrame("GameTooltip", "ELM_ScanTooltip", nil, "GameTooltipTemplate")
 ScanTooltip:SetOwner(UIParent, "ANCHOR_NONE")
 
@@ -94,9 +104,9 @@ local function IsItemBoP(slot)
     return false
 end
 
--- -------------------------------------------------------------------------
+-- ============================================================================
 -- HELPERS
--- -------------------------------------------------------------------------
+-- ============================================================================
 local function TruncateString(str, length)
     if not str then return "" end
     if string.len(str) > length then
@@ -132,8 +142,8 @@ local function GetColoredName(name)
     if not name or name == "" then return name end
     local class = RosterCache[name]
     if not class then
-        if UnitName("player") == name then
-            _, class = UnitClass("player")
+        if E.myname == name then
+            class = E.myclass
         end
     end
     if class then
@@ -147,16 +157,11 @@ end
 
 function ELM:PrintMasterLooterList()
     local db = E.LootManager.Global
-	
-	-- Define the colors here locally so the function can see them
-    local AddonColors = {"1784d1", "00CCFF", "A335EE", "F06F85"}
-    local BoEColors = {"FFD700", "FFFFFF", "FFD700"}
     
-    -- Colored first letters and BoE Gradient
     local prefixGB  = "• |cff1eff00Green|r - |cff0070ddBlue|r"
     local prefixEp  = "• |cffa335eeEpic BoP|r"
     local prefixLeg = "• |cffff8000Legendary|r"
-    local prefixBoE = "• " .. ELM:Gradient("Raid BoE", {"FFD700", "FFFFFF", "FFD700"})
+    local prefixBoE = BoEGradientPrefix
 
     local function Resolve(val) return (val and val ~= "") and val or "None" end
 
@@ -165,19 +170,16 @@ function ELM:PrintMasterLooterList()
     local nameLeg = Resolve(db.ml_legendary)
     local nameBoE = Resolve(db.ml_epic_boe)
 
-    -- Full gradient including the brackets and "Assignments"
--- Only the text is passed to the gradient; brackets are added as static white
-local headerText = "|cffffffff[|r" .. ELM:Gradient("ElvUI Loot Manager Assignments", AddonColors) .. "|cffffffff]|r"
-
-    DEFAULT_CHAT_FRAME:AddMessage(headerText)
+    DEFAULT_CHAT_FRAME:AddMessage(HeaderGradientText)
     DEFAULT_CHAT_FRAME:AddMessage(format("%s: %s", prefixGB, GetColoredName(nameGB)))
     DEFAULT_CHAT_FRAME:AddMessage(format("%s: %s", prefixEp, GetColoredName(nameEp)))
     DEFAULT_CHAT_FRAME:AddMessage(format("%s: %s", prefixLeg, GetColoredName(nameLeg)))
     DEFAULT_CHAT_FRAME:AddMessage(format("%s: %s", prefixBoE, GetColoredName(nameBoE)))
 end
--- -------------------------------------------------------------------------
+
+-- ============================================================================
 -- WIDGETS
--- -------------------------------------------------------------------------
+-- ============================================================================
 do
     local Type, Version = "ELM_ScrollSelect", 26
     local function OnAcquire(self)
@@ -306,6 +308,7 @@ do
 end
 
 -- WIDGET 2: ELM_Input
+
 do
     local Type, Version = "ELM_Input", 22
     local function OnAcquire(self)
@@ -337,6 +340,7 @@ do
 end
 
 -- WIDGET 3: ELM_Input_Clean
+
 do
     local Type, Version = "ELM_Input_Clean", 3
     local function OnAcquire(self)
@@ -416,9 +420,9 @@ do
     AceGUI:RegisterWidgetType(Type, Constructor, Version)
 end
 
--- -------------------------------------------------------------------------
+-- ============================================================================
 -- CORE INIT
--- -------------------------------------------------------------------------
+-- ============================================================================
 local GlobalDefaults = {
     ['enabled'] = true,
     ['disablePopups'] = true,
@@ -487,12 +491,15 @@ function ELM:OnEnable()
     -- REGISTER EVENTS
     self:RegisterEvent("START_LOOT_ROLL")
     self:RegisterEvent("LOOT_OPENED")
+    self:RegisterEvent("CANCEL_LOOT_ROLL") -- Need to register cancel event for hanging loot timers
     self:RegisterEvent("LOOT_CLOSED")
     self:RegisterEvent("PARTY_MEMBERS_CHANGED", "CheckMasterLooter")
     self:RegisterEvent("RAID_ROSTER_UPDATE", "CheckMasterLooter")
     self:RegisterEvent("PARTY_LOOT_METHOD_CHANGED", "CheckMasterLooter")
     self:RegisterEvent("PLAYER_ENTERING_WORLD", "CheckMasterLooter")
     self:RegisterEvent("UI_ERROR_MESSAGE")
+    self:RegisterEvent("CONFIRM_LOOT_ROLL", "ConfirmLoot")
+    self:RegisterEvent("CONFIRM_DISENCHANT_ROLL", "ConfirmLoot")
     
     -- CHAT FILTER
     local function LootMsgFilter(frame, event, message, ...)
@@ -528,13 +535,12 @@ function ELM:OnEnable()
 
         if not dialog then return end
 
-        local db = E.LootManager.Global
-        
-        -- VISIBILITY RESET: Ensure all non-managed popups are visible immediately
         dialog:SetAlpha(1)
 
-        -- Check if this specific popup type is in our handling whitelist
-        if db.enabled and db.disablePopups and PopupWhitelist[which] then
+        local db = E.LootManager.Global
+        if not (db and db.enabled and db.disablePopups) then return end
+
+        if PopupWhitelist[which] then
             ELM:AutoConfirmPopup(which, dialog)
         end
     end)
@@ -549,22 +555,29 @@ end
 function ELM:AutoConfirmPopup(which, dialog)
     dialog:SetAlpha(0)
     
-    -- 1. LOOT BIND (Picking up BoP Items)
     if which == "LOOT_BIND" then
+        if ELM.ActiveLootTimers["LOOT_BIND"] then
+            ELM:CancelTimer(ELM.ActiveLootTimers["LOOT_BIND"])
+            ELM.ActiveLootTimers["LOOT_BIND"] = nil
+        end
+        
         local attempts = 0
         local function ConfirmBind()
-            -- Safety check: Dialog must still match
-            if not dialog:IsVisible() and dialog.which ~= which then return end
+            ELM.ActiveLootTimers["LOOT_BIND"] = nil
+            if not dialog:IsVisible() or dialog.which ~= which then return end
             
             local slot = dialog.data
-            -- WAITING FOR DATA: Ensures slot is valid before Confirming
             if type(slot) == "number" then
                 ConfirmLootSlot(slot)
                 StaticPopup_Hide(which)
                 
-                -- Async Loot Pickup: Schedule LootSlot later to allow server processing
                 if not ELM.StopLooting then
-                    ELM:ScheduleTimer(function()
+                    local pickupKey = "PICKUP_" .. slot
+                    if ELM.ActiveLootTimers[pickupKey] then
+                        ELM:CancelTimer(ELM.ActiveLootTimers[pickupKey])
+                    end
+                    ELM.ActiveLootTimers[pickupKey] = ELM:ScheduleTimer(function()
+                        ELM.ActiveLootTimers[pickupKey] = nil
                         if not ELM.StopLooting and GetLootSlotInfo(slot) then
                             LootSlot(slot)
                         end
@@ -572,40 +585,52 @@ function ELM:AutoConfirmPopup(which, dialog)
                 end
             else
                 attempts = attempts + 1
-                if attempts > 20 then -- 1s Timeout
+                if attempts > 20 then
                     dialog:SetAlpha(1)
                     return
                 end
-                ELM:ScheduleTimer(ConfirmBind, 0.05)
+                ELM.ActiveLootTimers["LOOT_BIND"] = ELM:ScheduleTimer(ConfirmBind, 0.05)
             end
         end
         ConfirmBind()
 
-    -- 2. LOOT ROLLS (Need/Greed/DE)
     elseif which == "CONFIRM_LOOT_ROLL" or which == "CONFIRM_DISENCHANT_ROLL" then
+        if ELM.ActiveLootTimers[which] then
+            ELM:CancelTimer(ELM.ActiveLootTimers[which])
+            ELM.ActiveLootTimers[which] = nil
+        end
         
         local btn = _G[dialog:GetName().."Button1"]
+        local attempts = 0
         
         local function AttemptConfirm()
-             if not dialog:IsVisible() and dialog.which ~= which then return end
+             ELM.ActiveLootTimers[which] = nil
+             if not dialog:IsVisible() or dialog.which ~= which then return end
              
-             -- Unpack if table
              if type(dialog.data) == "table" then
                 dialog.data2 = dialog.data[2]
                 dialog.data = dialog.data[1]
              end
              
-             -- Ensure data is ready (Numbers) before Clicking
              if (type(dialog.data) == "number") and (type(dialog.data2) == "number") then
                  if btn and btn:IsEnabled() then
-                     btn:Click() -- Use Native Click for UI integrity (Fixes infinite timer)
+                     btn:Click()
+                     ELM:HideRollFrame(dialog.data)
                  else
-                     -- Button not enabled yet? Wait.
-                     ELM:ScheduleTimer(AttemptConfirm, 0.05)
+                     attempts = attempts + 1
+                     if attempts > 20 then
+                         dialog:SetAlpha(1)
+                         return
+                     end
+                     ELM.ActiveLootTimers[which] = ELM:ScheduleTimer(AttemptConfirm, 0.05)
                  end
              else
-                 -- Data not ready? Wait.
-                 ELM:ScheduleTimer(AttemptConfirm, 0.05)
+                 attempts = attempts + 1
+                 if attempts > 20 then
+                     dialog:SetAlpha(1)
+                     return
+                 end
+                 ELM.ActiveLootTimers[which] = ELM:ScheduleTimer(AttemptConfirm, 0.05)
              end
         end
         
@@ -613,9 +638,31 @@ function ELM:AutoConfirmPopup(which, dialog)
     end
 end
 
+function ELM:CANCEL_LOOT_ROLL(event, id)
+    local db = E.LootManager.Global
+    if not db or not db.enabled then return end   -- disabled = do nothing, let ElvUI handle everything
+
+    -- Only clean our own AceTimers + confirm popups (never touch the visual bars)
+    for key, timer in pairs(ELM.ActiveLootTimers) do
+        if key == "CONFIRM_LOOT_ROLL" or key == "CONFIRM_DISENCHANT_ROLL" then
+            self:CancelTimer(timer)
+            ELM.ActiveLootTimers[key] = nil
+        end
+    end
+
+    for i = 1, 4 do
+        local popup = _G["StaticPopup"..i]
+        if popup and popup:IsShown() and (popup.which == "CONFIRM_LOOT_ROLL" or popup.which == "CONFIRM_DISENCHANT_ROLL") then
+            local rollID = type(popup.data) == "table" and popup.data[1] or popup.data
+            if rollID == id then
+                StaticPopup_Hide(popup.which)
+            end
+        end
+    end
+end
+
 function ELM:LOOT_CLOSED()
-    -- Clear timers
-    for slot, timer in pairs(ELM.ActiveLootTimers) do
+    for key, timer in pairs(ELM.ActiveLootTimers) do
         self:CancelTimer(timer)
     end
     wipe(ELM.ActiveLootTimers)
@@ -624,9 +671,8 @@ end
 
 function ELM:UI_ERROR_MESSAGE(event, msg)
     if not msg then return end
-    local myName = UnitName("player")
+    local myName = E.myname or UnitName("player")
 
-    -- Smart check: If item is still being rolled for, STOP trying to auto-loot it.
     if strfind(msg, "rolled") or strfind(msg, "locked") then
         ELM.StopLooting = true
     end
@@ -663,9 +709,34 @@ function ELM:UI_ERROR_MESSAGE(event, msg)
     end
 end
 
--- -------------------------------------------------------------------------
+-- ============================================================================
 -- ROLL LOGIC (Auto Greed/Need/DE)
--- -------------------------------------------------------------------------
+-- ============================================================================
+
+function ELM:ConfirmLoot(event, id, rollType)
+    local db = E.LootManager.Global
+    if db.enabled and db.disablePopups then
+        ConfirmLootRoll(id, rollType)
+        StaticPopup_Hide(event, id)
+    end
+end
+
+function ELM:HideRollFrame(rollID)
+    if not rollID then return end
+    for i = 1, 4 do
+        local f1 = _G["GroupLootFrame"..i]
+        if f1 and f1.rollID == rollID then
+            f1.rollID = nil          -- critical – returns bar to ElvUI pool
+            f1:Hide()
+        end
+        local f2 = _G["ElvUI_LootRoll"..i]
+        if f2 and f2.rollID == rollID then
+            f2.rollID = nil          -- critical
+            f2:Hide()
+        end
+    end
+end
+
 function ELM:START_LOOT_ROLL(event, id)
     local db = E.LootManager.Global
     if not db.enabled then return end
@@ -673,78 +744,51 @@ function ELM:START_LOOT_ROLL(event, id)
     local _, _, _, quality, bindOnPickUp, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(id)
     local link = GetLootRollItemLink(id)
     local itemID = link and tonumber(link:match("item:(%d+)"))
-    
-	-- Helper to clear the frame so it doesn't stay stuck at 0
-local function DismissRollFrame(rollID)
-    local attempts = 0
-    local function Cleanup()
-        local found = false
-        for i = 1, NUM_GROUP_LOOT_FRAMES do
-            local frame = _G["GroupLootFrame"..i]
-            if frame and frame.rollID == rollID then
-                -- 1. Stop all Blizzard and ElvUI timers
-                frame:Hide()
-                if frame.Timer then frame.Timer:Stop() end
-                
-                -- 2. Clear the ID so the frame is "freed" for the next item
-                frame.rollID = nil
-                found = true
-            end
-        end
-        
-        -- 3. If the frame was stubborn (still showing), try again 4 times (0.2 seconds total)
-        attempts = attempts + 1
-        if found and attempts < 4 then
-            E:Delay(0.05, Cleanup)
+    local rolled = false
+
+    if db.enableNeedList and itemID and db.needList[itemID] and canNeed then
+        RollOnLoot(id, 1)
+        self:Console("Auto Need: " .. (link or "Item"))
+        rolled = true
+    elseif db.rollEpicBoE and quality == 4 and not bindOnPickUp and canNeed then
+        RollOnLoot(id, 1)
+        self:Console("Auto Need (Epic BoE): " .. (link or "Item"))
+        rolled = true
+    elseif db.autoGreed and (quality == 2 or quality == 3) then
+        if db.autoDe and canDisenchant then
+            RollOnLoot(id, 3)
+            rolled = true
+        elseif canGreed then
+            RollOnLoot(id, 2)
+            rolled = true
         end
     end
-    Cleanup()
-end
-	
--- 1. NEED LIST
-if db.enableNeedList and itemID and db.needList[itemID] and canNeed then
-    RollOnLoot(id, 1)
-    self:Console("Auto Need: " .. (link or "Item"))
-    E:Delay(0.1, function() DismissRollFrame(id) end) -- Safety delay
-    return
-end
 
--- 2. EPIC BOE
-if db.rollEpicBoE and quality == 4 and not bindOnPickUp and canNeed then
-    RollOnLoot(id, 1)
-    self:Console("Auto Need (Epic BoE): " .. (link or "Item"))
-    E:Delay(0.1, function() DismissRollFrame(id) end) -- Safety delay
-    return
-end
-
--- 3. GREEN/BLUE
-if db.autoGreed and (quality == 2 or quality == 3) then
-    if db.autoDe and canDisenchant then
-        RollOnLoot(id, 3) -- Disenchant
-    elseif canGreed then
-        RollOnLoot(id, 2) -- Greed
+    if rolled then
+        self:HideRollFrame(id)
     end
-    
-    -- Disenchanting often causes "ghost" bars; this delay clears them
-    E:Delay(0.1, function() DismissRollFrame(id) end)
-end
 end
 
--- -------------------------------------------------------------------------
+-- ============================================================================
 -- MASTER LOOT LOGIC
--- -------------------------------------------------------------------------
+-- ============================================================================
+local CandidateMap = {}
+
 local function IsPlayerOnline(name)
     if not name then return false end
-    if UnitName("player") == name then return true end
+    local myName = E.myname or UnitName("player")
+    if myName == name then return true end
     
-    if UnitInRaid("player") then
-        for i=1, 40 do
+    local numRaid = GetNumRaidMembers()
+    if numRaid > 0 then
+        for i = 1, numRaid do
             if UnitName("raid"..i) == name then
                 return UnitIsConnected("raid"..i)
             end
         end
     else
-        for i=1, 4 do
+        local numParty = GetNumPartyMembers()
+        for i = 1, numParty do
             if UnitName("party"..i) == name then
                 return UnitIsConnected("party"..i)
             end
@@ -754,7 +798,7 @@ local function IsPlayerOnline(name)
 end
 
 function ELM:LOOT_OPENED()
-    ELM.StopLooting = false -- Reset loot safety flag on new window
+    ELM.StopLooting = false
     
     local db = E.LootManager.Global
     if not db.enabled then return end
@@ -777,14 +821,14 @@ function ELM:LOOT_OPENED()
     local numItems = GetNumLootItems()
     if numItems == 0 then return end
 
-    local candidateMap = {}
-    local myName = UnitName("player")
+    wipe(CandidateMap)
+    local myName = E.myname or UnitName("player")
     local myIndex = nil
     
     for i = 1, 40 do
         local cName = GetMasterLootCandidate(i)
         if not cName then break end
-        candidateMap[string.lower(cName)] = i
+        CandidateMap[string.lower(cName)] = i
         if cName == myName then myIndex = i end
     end
 
@@ -792,7 +836,7 @@ function ELM:LOOT_OPENED()
         local input = db[key]
         if input and strtrim(input) ~= "" then
             local cleanInput = strtrim(input)
-            local idx = candidateMap[string.lower(cleanInput)]
+            local idx = CandidateMap[string.lower(cleanInput)]
             if idx then 
                 local candidateName = GetMasterLootCandidate(idx)
                 if IsPlayerOnline(candidateName) then
