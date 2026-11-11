@@ -37,3 +37,4 @@ Access the configuration panel directly in the **ElvUI settings menu** or use th
 > [!TIP]
 > If You see a folder named `ElvUI_LootManager-main` inside your `AddOns` folder, **YOU DID IT WRONG** Take the folders out of it and put them in the main AddOns directory!
 
+---
