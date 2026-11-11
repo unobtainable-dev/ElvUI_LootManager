@@ -4,47 +4,36 @@
 
 ---
 
-## 🚀 Key Features
-
-* **⚡ Popup Bypass**: Instantly confirms BoP binding alerts, loot rolls, and disenchant popups (`LOOT_BIND`, `CONFIRM_LOOT_ROLL`, `CONFIRM_DISENCHANT_ROLL`) with zero delay.
+* **✅ Popup Bypass**: Instantly confirms BoP binding alerts, loot rolls, and disenchant popups.
 * **🎲 Auto-Roll Engine**:
-  * **Need List**: Automatically rolls **Need** on user-defined item IDs.
-  * **Epic BoE Safeguard**: Automatically rolls **Need** on Epic BoE items to ensure they aren't lost to greed.
-  * **Greed & DE**: Automatically rolls **Greed** or **Disenchant** on Green and Blue items based on your settings.
-* **👑 Master Loot Automation**: Automatically distributes items to assigned candidates based on quality rules when you are the Master Looter:
-  * `Green/Blue` Items
-  * `Epic BoP` Items
-  * `Epic BoE` Items
-  * `Legendary` Items
-* **🧹 Chat Cleanup**: Option to hide verbose Blizzard loot spam messages while keeping you updated with neat, clean custom print actions].
-* **🎨 Custom UI & Aesthetics**: Built-in custom AceGUI widgets (`ELM_ScrollSelect`, `ELM_Input`, `ELM_Button`) with custom color gradients matching the class colors of raid targets.
+  * **Need List**: Automatically roll **Need** on user-defined item IDs if possible.
+  * **Greed Green/Blue Items**: Automatically roll **Greed** Green and Blue items based on your settings.
+    * **Auto Disenchant**: Automatically roll **Disenchant** Green and Blue items (This option requires Greed Green/Blue items Active)
+  * **Epic BoE Safeguard**: Automatically roll **Need** on Epic BoE items.
+* **💰 Master Loot Auto-Distribution**: Automatically distributes items to assigned Players based on quality rules when you are the Master Looter:
+> [!CAUTION] 
+> Auto distribution will check for Player name if its misspelled, if player is offline or missing it will assign item to YOU (MASTER LOOTER). EXCEPT IN LEGENDARY CASE!
+  * `Green & Blue` Items
+  * `Epic Bind on Pickup` Items
+  * `Epic Bind on Equip` Items
+  * `Legendary` Items 
+  > [!WARNING] 
+  > `Legendary` option has built-in protection and requires exact Player name to distribute the item. In case the name is misspelled, player is offline or missing. Nothing happens and it requires manual distribution or NAME fixing within options.
+* **🧹 Chat Cleanup**: Option to hide Blizzard loot messages while keeping you updated with neat, clean custom print actions.
 
 ---
 
 ## 🛠️ Commands & Configuration
 
-Access the configuration panel directly in the **ElvUI settings menu** or use the chat command:
+Access the configuration panel directly in the **ElvUI settings menu** or use the chat command: `/ELM`
 
-```text
-/elm
-```
+## 📦 How to Install
 
-### 📦 How It Works (Technical Overview)
+- Extract `ElvUI_LootManager-main.zip`
+- Open Folder `ElvUI_LootManager-main`
+- Copy Folder `ElvUI_LootManager`
+- Paste Folder to: `Interface\AddOns`
 
-```text
-                       [ Loot Event Captured ]
-                                  │
-         ┌────────────────────────┴────────────────────────┐
-         ▼                                                 ▼
- [ Solo / Group Loot ]                             [ Master Loot Mode ]
-   ├── Need List match? -> Auto Need                 ├── Item quality matches assignee?
-   ├── Epic BoE? -> Auto Need                        │     ├── Candidate online? -> Auto-assign
-   ├── Green/Blue? -> Auto Greed/DE                  │     └── Candidate offline? -> Fallback to Self
-   └── Confirmation Popup? -> Auto Confirm           └── Legendary Target missing? -> Warn Chat
-```
+> [!TIP]
+> If You see a folder named `ElvUI_LootManager-main` inside your `AddOns` folder, **YOU DID IT WRONG** Take the folders out of it and put them in the main AddOns directory!
 
-## 📝 To-Do List / Upcoming Features
-
-- [ ] **Easy Item Linking**: Shift-click items directly into the text boxes to add them to your lists.
-- [ ] **Performance Upgrades**: Back-end speed adjustments so it never shows a hanging loot bar, even on massive items pop ups. 
-- [ ] **Retro-Compatibility**: Ensuring the plugin works flawlessly on older ElvUI versions.
